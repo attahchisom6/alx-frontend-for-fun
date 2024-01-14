@@ -56,18 +56,19 @@ def parse_paragraph(line):
     return "".join(parsed_lines)"""
     filtered = []
     paragraph_lines = []
-    if parse_heading(line) == "" and syntax_line(line, "* ", "li") == syntax_line(line, "- ", "li") == False:
+    if parse_heading(line) == "" and syntax_line(line, "* ", "li") == None and syntax_line(line, "- ", "li") == None:
         filtered.append(line)
         k = 0
         while (k < len(filtered)):
-            if filtered[k].strip() and not filtered[k - 1] and not filtered[k + 1]:
+            if filtered[k].strip() and not filtered[k - 1].strip() and not filtered[k + 1].strip():
                 paragraph_lines.append(" ")
                 paragraph_lines.append(filtered[k].strip())
                 paragraph_lines.append(" ")
-            elif not filtered[k - 1] and filtered[k].strip() and filtered[k + 1].strip():
+            elif not filtered[k - 1].strip() and filtered[k].strip() and filtered[k + 1].strip():
                 paragraph_lines.append(filtered[k].strip())
                 paragraph_lines.append(filtered[k + 1].strip())
             k += 1
+        print("paragraph_lines: {}".format(paragraph_lines))
         return "".join(paragraph_lines)
     return None
 
