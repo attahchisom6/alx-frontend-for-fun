@@ -3,24 +3,6 @@ import os
 import sys
 import re
 
-"""def parse_heading(line):
-    parse heading to html
-    heading_match = re.match(r'^(#{1,6})\s*(.*)$', line)
-
-    if heading_match:
-        level_heading = len(heading_match.group(1))
-        text_heading = heading_match.group(2).strip();
-        return '<h{}>{}</h{}>\n'.format(level_heading, text_heading, level_heading)
-
-    if line.startswith("- "):
-        ul_items = ["<li>{}</li>".format(item.strip()) for item in line.split("- ")[1:]]
-        UL_items = []
-        for ul_item in ul_items:
-            UL_items.append(ul_item)
-        L = "".join(UL_items)
-        print(L)
-        return "<ul>\n" + L + "</ul>\n"
-    return line"""
 def parse_heading(line):
     """parse heading to html"""
     heading_match = re.match(r'^(#{1,6})\s*(.*)$', line)
@@ -30,38 +12,50 @@ def parse_heading(line):
         text_heading = heading_match.group(2).strip()
         return '<h{}>{}</h{}>\n'.format(level_heading, text_heading, level_heading)
 
-    """if line.startswith("- "):
-        line = dashed_line(line);
-        print("here is the line: {}".format(line));
-        # print("line 0: {}".format(line[0]))
-        ul_items = ["\t<li>{}</li>\n".format(item.strip()) for item in line]
-        return "<ul>\n" + "".join(ul_items) + "</ul>\n" """
-
     return line
 
 
-def dashed_line(l):
-    """
-    parse line that start with - into  single string"""
+def syntax_line(line, symbol, tag):
+    """parse line with chosen symbol to html"""
     Lines = []
-    line = ""
+    l = ""
     Modified = []
-    n = ""
-    k = ""
-    # for l in lines:
-    if l.startswith("- "):
-        Lines.append(l.strip());
-        line = "".join(Lines)
-        n = line
-        Modified.append("<li>{}</li>".format(line[2:]))
-        k = "".join(Modified)
 
-        html = "<ul>{}</ul>".format("".join(Modified))
-        print(f'line: {n}')
-        print(f"Modified: {k}")
-        print(f"html: {html}")
+    if line.startswith(symbol):
+        Lines.append(line.strip());
+        l = "".join(Lines)
+        Modified.append("\t<{}>{}</{}>\n".format(tag, l[2:], tag))
+
+        html = "{}".format("".join(Modified))
         return html
-    return l
+    return None
+
+def parse_paragraph(lines):
+    """
+    parse desired content to html paragrapgh
+    """
+    in_paragraph = False
+    parsed_lines = []
+
+    for line in lines:
+        if syntax_line(line, "* ", "li") is None:
+            if not line.strip(): # evaluate to true if line is empty
+                if in_paragraph:
+                    parsed_lines.append("\n\t<br />\n</p>\n")
+                    in_paragraph = False
+                else:
+                    parsed_lines.append("\n")
+            else: # non empty line
+                if not in_paragraph:
+                    parsed_lines.append("<p>\n\t{}".format(line.strip()))
+                    in_paragraph = True
+                else:
+                    parsed_lines.append("\n\t{}".format(line.strip()))
+
+        if in_paragraph:
+            parsed_lines.append("\n\t<br>\n<\p>\n")
+        return "".join(parsed_lines)
+
 
 def markdown(filename=None, file_output=None):
     """
@@ -80,11 +74,22 @@ def markdown(filename=None, file_output=None):
 
     with open(file_output, "w", encoding="utf-8") as f_out:
         dash_array = []
+        asterisk_array = []
         for line in lines:
-            line = dashed_line(line)
-            if line:
+            d_line = syntax_line(line, "- ", "li")
+            ast_line = syntax_line(line, "* ", "li")
+            if d_line:
+                dash_array.append(d_line)
+            elif ast_line:
+                asterisk_array.append(ast_line)
+            else:
                 f_out.write(parse_heading(line))
-            
+        if dash_array:
+            f_out.write("<ul>\n{}\n</ul>\n".format("".join(dash_array)))
+        if asterisk_array:
+            f_out.write("<ol>\n{}\n</ol>\n".format("".join(asterisk_array)))
+        f_out.write(parse_paragraph(lines))
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
@@ -93,4 +98,4 @@ if __name__ == "__main__":
         filename = sys.argv[1];
         file_output=sys.argv[2];
         markdown(filename=filename, file_output=file_output)
-    sys.exit(0)
+        sys.exit(0)
