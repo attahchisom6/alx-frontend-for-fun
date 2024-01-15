@@ -31,47 +31,67 @@ def syntax_line(line, symbol, tag):
         return html
     return None
 
-def parse_paragraph(line):
+def parse_paragraph(lines):
     """
     parse desired content to html paragrapgh
     """
-    """in_paragraph = False
-    parsed_lines = []
+    current_paragraph, paragraphs = [], []
+    flag = False
 
-    if not line.strip(): # evaluate to true if line is empty
-        if in_paragraph:
-            parsed_lines.append("\n\t<br />\n</p>\n")
-            in_paragraph = False
-        else:
-            parsed_lines.append("\n")
-    else: # non empty line
-        if not in_paragraph:
-            parsed_lines.append("<p>\n\t{}".format(line.strip()))
-            in_paragraph = True
-        else:
-            parsed_lines.append("\n\t{}".format(line.strip()))
+    for k, line in enumerate(lines):
+        heading = parse_heading(line)
+        syntaxes = syntax_line(line, "- ", "li") or syntax_line(line, "* ", "li")
+        if not heading and not syntaxes:
+            print(f"paragraph lines: {line}")
+            current_paragraph.append(line.strip())
+            print(f"current paragraph: {current_paragraph}")
 
-    if in_paragraph:
-        parsed_lines.append("\n\t<br>\n<\p>\n")
-    return "".join(parsed_lines)"""
-    filtered = []
-    paragraph_lines = []
-    if parse_heading(line) == "" and syntax_line(line, "* ", "li") == None and syntax_line(line, "- ", "li") == None:
-        filtered.append(line)
-        k = 0
-        while (k < len(filtered)):
-            if filtered[k].strip() and not filtered[k - 1].strip() and not filtered[k + 1].strip():
-                paragraph_lines.append(" ")
-                paragraph_lines.append(filtered[k].strip())
-                paragraph_lines.append(" ")
-            elif not filtered[k - 1].strip() and filtered[k].strip() and filtered[k + 1].strip():
-                paragraph_lines.append(filtered[k].strip())
-                paragraph_lines.append(filtered[k + 1].strip())
-            k += 1
-        print("paragraph_lines: {}".format(paragraph_lines))
-        return "".join(paragraph_lines)
-    return None
+            """if k > 0 and not lines[k - 1].strip() and k < len(lines) - 1 and  not lines[k + 1].strip() and lines[k]:
+                paragraphs.append("<p>\n\t{}\n</p>\n".format(lines[k].strip()))
+                current_paragraph = []
+            elif k > 0 and not lines[k - 1].strip() and k < len(lines) - 1 and \
+        lines[k + 1].strip() and lines[k]:
+                paragraphs.append("<p>\n\t{}\n\t<br />\n\t{}\n</p>\n".format(lines[k].strip(), lines[k + 1].strip()))
+                current_paragraph = []"""
 
+    tup = list_parser(current_paragraph)
+    print(f"tupe: {tup[1]}")
+    """if line.startswith("- "):
+        line = dashed_line(line);
+        print("here is the line: {}".format(line));
+        # print("line 0: {}".format(line[0]))
+        ul_items = ["\t<li>{}</li>\n".format(item.strip()) for item in line]
+        return "<ul>\n" + "".join(ul_items) + "</ul>\n" """
+
+    return "".join(paragraphs);
+
+
+def list_parser(A):
+    """
+    parse a list into a items with diverse properties and return a tuple of them
+    """
+    isolated_items = []
+    non_isolated_groups = []
+    current_group = []
+
+    for k in range(len(A)):
+        if A[k] != "":
+            if k == 0:
+                if k + 1 < len(A) and A[k + 1] == "":
+                    isolated_items.append(A[k])
+            elif k == len(A) - 1:
+                if A[k - 1] == "":
+                    isolated_items.append(A[k])
+            elif A[k - 1] == "" and A[k + 1] == "":
+                isolated_items.append(A[k])
+            else:
+                current_group.append(A[k])
+
+        if current_group:
+            non_isolated_groups.append(current_group)
+            current_group = []
+
+    return isolated_items, non_isolated_groups
 
 
 def markdown(filename=None, file_output=None):
@@ -92,30 +112,21 @@ def markdown(filename=None, file_output=None):
     with open(file_output, "w", encoding="utf-8") as f_out:
         dash_array = []
         asterisk_array = []
-        paragraph_array = []
         for line in lines:
             d_line = syntax_line(line, "- ", "li")
             ast_line = syntax_line(line, "* ", "li")
             heading = parse_heading(line)
-            p_line = parse_paragraph(line)
             if d_line:
                 dash_array.append(d_line)
             elif ast_line:
                 asterisk_array.append(ast_line)
-            elif p_line:
-                paragraph_array.append(p_line)
             else:
                 f_out.write(heading)
         if dash_array:
             f_out.write("<ul>\n{}\n</ul>\n".format("".join(dash_array)))
         if asterisk_array:
             f_out.write("<ol>\n{}\n</ol>\n".format("".join(asterisk_array)))
-        if paragraph_array:
-            for k in range(len(paragraph_array)):
-                if paragraph_array[k - 1] and paragraph_array[k + 1] == " ":
-                    f_out.write("<p>{}</p>".format(paragraph_array[k]))
-                else:
-                    f_out("<p>\n\t{}\n\t{}\n</p>\n".format(paragraph_array[k], paragraph_array[k + 1]))
+        f_out.write(parse_paragraph(lines))
 
 
 if __name__ == "__main__":
