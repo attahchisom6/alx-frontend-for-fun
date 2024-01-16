@@ -28,7 +28,17 @@ def syntax_line(line, symbol, tag):
         Modified.append("\t<{}>{}</{}>\n".format(tag, l[2:], tag))
 
         html = "{}".format("".join(Modified))
+        Lines, l, Modified = [], "", []
         return html
+
+    elif line.startswith(symbol) and line.endswith(symbol):
+        Lines.append(line.strip())
+        l = "".join(Lines)
+        Modified.append("<{}>{}</{}>".format(tag, l[2:-4], tag))
+        html2 = "".join(Modified)
+        Lines, l, Modified = [], "", []
+        return html2
+
     return None
 
 def parse_paragraph(lines):
@@ -36,34 +46,34 @@ def parse_paragraph(lines):
     parse desired content to html paragrapgh
     """
     current_paragraph, paragraphs = [], []
-    flag = False
 
     for k, line in enumerate(lines):
         heading = parse_heading(line)
-        syntaxes = syntax_line(line, "- ", "li") or syntax_line(line, "* ", "li")
+        syntaxes = syntax_line(line, "- ", "li") or syntax_line(line, "* ", "li") or syntax_line(line, "**", "b")
         if not heading and not syntaxes:
             print(f"paragraph lines: {line}")
             current_paragraph.append(line.strip())
             print(f"current paragraph: {current_paragraph}")
 
-            """if k > 0 and not lines[k - 1].strip() and k < len(lines) - 1 and  not lines[k + 1].strip() and lines[k]:
-                paragraphs.append("<p>\n\t{}\n</p>\n".format(lines[k].strip()))
-                current_paragraph = []
-            elif k > 0 and not lines[k - 1].strip() and k < len(lines) - 1 and \
-        lines[k + 1].strip() and lines[k]:
-                paragraphs.append("<p>\n\t{}\n\t<br />\n\t{}\n</p>\n".format(lines[k].strip(), lines[k + 1].strip()))
-                current_paragraph = []"""
+    isolated_items, non_isolated_groups = list_parser(current_paragraph)
+    print(f"tupe: {non_isolated_groups}")
 
-    tup = list_parser(current_paragraph)
-    print(f"tupe: {tup[1]}")
-    """if line.startswith("- "):
-        line = dashed_line(line);
-        print("here is the line: {}".format(line));
-        # print("line 0: {}".format(line[0]))
-        ul_items = ["\t<li>{}</li>\n".format(item.strip()) for item in line]
-        return "<ul>\n" + "".join(ul_items) + "</ul>\n" """
+    if isolated_items != []:
+        k = 0
+        while k < len(isolated_items):
+            if isolated_items[k]:
+                paragraphs.append("<p>\n\t{}\n</p>\n".format(isolated_items[k]))
+            k += 1
 
-    return "".join(paragraphs);
+    if non_isolated_groups:
+        p = 0
+        while p < len(non_isolated_groups):
+            if non_isolated_groups[p]:
+                paragraphs.append("<p>\n{}\n</p>\n".format("\n".join(non_isolated_groups[p])))
+            p += 1
+
+    print(f"paragraphs array: {paragraphs}")
+    return "".join(paragraphs)
 
 
 def list_parser(A):
@@ -72,8 +82,13 @@ def list_parser(A):
     """
     isolated_items = []
     non_isolated_groups = []
-    current_group = []
 
+    # logic to get non_isolated_groups: join items to aid the use of regex
+    joined_text = "\n".join(A)
+    non_isolated_groups_text = re.split(r"\n\s*\n", joined_text)
+    non_isolated_groups_text = [group.strip() for group in non_isolated_groups_text if group.strip()]
+
+    # logic to extract isolated items
     for k in range(len(A)):
         if A[k] != "":
             if k == 0:
@@ -82,15 +97,21 @@ def list_parser(A):
             elif k == len(A) - 1:
                 if A[k - 1] == "":
                     isolated_items.append(A[k])
-            elif A[k - 1] == "" and A[k + 1] == "":
-                isolated_items.append(A[k])
-            else:
-                current_group.append(A[k])
+            elif 0 < k and k < len(A) - 1:
+                if A[k - 1] == "" and A[k + 1] == "":
+                    isolated_items.append(A[k])
+        else:
+            isolated_items = []
 
-        if current_group:
-            non_isolated_groups.append(current_group)
-            current_group = []
+    # logic to filter out isolated items from non isolated groups
+    non_isolated_groups = [group.split("\n") for group in non_isolated_groups_text if group not in isolated_items] if isolated_items else [group.split("\n") for group in non_isolated_groups_text]
 
+    non_isolated_groups = [
+            ["\t" + item + "\n\t<br />" if index != len(items) - 1 else "\t" + item for index, item in enumerate(items)]
+            for items in non_isolated_groups
+        ]
+
+    print(f"isolated items: {isolated_items}")
     return isolated_items, non_isolated_groups
 
 
@@ -115,11 +136,15 @@ def markdown(filename=None, file_output=None):
         for line in lines:
             d_line = syntax_line(line, "- ", "li")
             ast_line = syntax_line(line, "* ", "li")
+            bold_line = syntax_line(line, "**", "b")
             heading = parse_heading(line)
             if d_line:
                 dash_array.append(d_line)
             elif ast_line:
                 asterisk_array.append(ast_line)
+            elif bold_line:
+                print(f"bold line:{bold_line}")
+                f_out.write(bold_line)
             else:
                 f_out.write(heading)
         if dash_array:
