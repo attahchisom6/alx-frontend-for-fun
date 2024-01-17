@@ -26,3 +26,21 @@ with 5 lines
 with 7 lines
 
 **God lives**
+
+# My title
+- He**l**lo
+- Bye
+
+Hello
+
+I'm **a** text
+with __2 lines__
+
+**Or in bold**
+* just a test **and**__it worked__
+
+((I will live in Caracas))
+
+But it's [[private]]
+
+So cool!
