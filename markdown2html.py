@@ -3,6 +3,7 @@ import ast
 import os
 import sys
 import re
+import hashlib
 
 def parse_heading(line):
     """parse heading to html"""
@@ -11,7 +12,7 @@ def parse_heading(line):
     if heading_match:
         level_heading = len(heading_match.group(1))
         text_heading = heading_match.group(2).strip()
-        return '<h{}>{}</h{}>\n'.format(level_heading, text_heading, level_heading)
+        return '\t<h{}>{}</h{}>\n'.format(level_heading, text_heading, level_heading)
 
     return ""
 
@@ -30,15 +31,6 @@ def syntax_line(line, symbol, tag):
         html = "{}".format("".join(Modified))
         Lines, l, Modified = [], "", []
         return html
-
-    elif line.startswith(symbol) and line.endswith(symbol):
-        Lines.append(line.strip())
-        l = "".join(Lines)
-        Modified.append("<{}>{}</{}>".format(tag, l[2:-4], tag))
-        html2 = "".join(Modified)
-        Lines, l, Modified = [], "", []
-        return html2
-
     return None
 
 def parse_paragraph(lines):
@@ -115,6 +107,44 @@ def list_parser(A):
     return isolated_items, non_isolated_groups
 
 
+def parse_group_syntax_line(lines):
+    """parse lines with desired syntaxes into html"""
+    syntax_group_array = []
+
+    for idx, line in enumerate(lines):
+        syntax_group_array.append(line)
+        bold_matcher = r"\*\*{1}(.*?)\*\*{1}"
+        emph_matcher = r"__(.*?)__"
+        brace_matcher = r"\[\[{1}(.*?)\]\]{1}"
+        brac_matcher = r"\(\({1}(.*?)\)\){1}"
+
+        found_bold = re.finditer(bold_matcher, line)
+        found_emph = re.finditer(emph_matcher, line)
+        found_brace = re.finditer(brace_matcher, line)
+        found_brac = re.finditer(brac_matcher, line)
+
+        if found_bold:
+            for match in found_bold:
+                line = line.replace(match.group(), "<b>{}</b>".format(match.group(1)))
+                syntax_group_array[idx] = line
+
+        if found_emph:
+            for match in found_emph:
+                line = line.replace(match.group(), "<em>{}</em>".format(match.group(1)))
+                syntax_group_array[idx] = line
+        if found_brace:
+            for match in found_brace:
+                line = line.replace(match.group(), "{}".format(hashlib.md5(match.group(1).strip().encode()).hexdigest()))
+                syntax_group_array[idx] = line
+        if found_brac:
+            for match in found_brac:
+                line = line.replace(match.group(), "{}".format(match.group(1).strip().replace("C", "").replace("c", "")))
+                syntax_group_array[idx] = line
+
+        print(f"bold and emphasis line: {line}")
+    return  syntax_group_array
+
+
 def markdown(filename=None, file_output=None):
     """
     A mark down script to convert markdown to html
@@ -129,29 +159,42 @@ def markdown(filename=None, file_output=None):
 
     with open(filename, encoding="utf-8") as f:
         lines = f.readlines();
+        print(f"lines from the readlines: {lines}")
 
     with open(file_output, "w", encoding="utf-8") as f_out:
-        dash_array = []
-        asterisk_array = []
+        dash_array, asterisk_array = [], []
+        is_asterisk_array, is_dash_array = False, False
+        lines = parse_group_syntax_line(lines)
+        print(f"transformed lines: {lines}")
+        f_out.write("<!Doctype html>\n<html lang='en'>\n\t<head>\n\t\t<meta charset='utf-8'>\n\t</head>\n\t<body>\n")
         for line in lines:
             d_line = syntax_line(line, "- ", "li")
             ast_line = syntax_line(line, "* ", "li")
-            bold_line = syntax_line(line, "**", "b")
             heading = parse_heading(line)
             if d_line:
+                is_dash_array = True
                 dash_array.append(d_line)
             elif ast_line:
+                is_asterisk_array = True
                 asterisk_array.append(ast_line)
-            elif bold_line:
-                print(f"bold line:{bold_line}")
-                f_out.write(bold_line)
+            elif not line.strip() and (is_dash_array or is_asterisk_array):
+                if dash_array:
+                    is_dash_array = False
+                    f_out.write("<ul>\n{}\n</ul>\n".format("".join(dash_array)))
+                    dash_array = []
+                if asterisk_array:
+                    is_asterisk_array = False
+                    f_out.write("<ol>\n{}\n</ol>\n".format("".join(asterisk_array)))
+                    asterisk_array = []
             else:
+
                 f_out.write(heading)
         if dash_array:
             f_out.write("<ul>\n{}\n</ul>\n".format("".join(dash_array)))
         if asterisk_array:
             f_out.write("<ol>\n{}\n</ol>\n".format("".join(asterisk_array)))
         f_out.write(parse_paragraph(lines))
+        f_out.write("\t</body>\n</html>\n")
 
 
 if __name__ == "__main__":
