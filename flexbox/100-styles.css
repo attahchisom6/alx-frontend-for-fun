@@ -214,6 +214,7 @@
     font-size: var(--nav-item-font-size);
     letter-spacing: var(--nav-item-letter-spacing);
     margin: var(--nav-item-margin);
+    padding: 3px;
   }
   
   .nav .nav-link {
@@ -562,18 +563,35 @@
 
 /* Post
     ============================= */
- .main-article .post {
-   display: flex;
- }
+.post {
+  display: flex;
+}
 
- .main-article .post > .post-content {
-   width: 100%;
- }
+.post-content {
+  width: 100%;
+}
 
- .main-article .post > .post-aside {
-   order: -1;
-   min-width: 20%;
- }
+.post-aside {
+  order: -1;
+  min-width: 20%;
+}
+
+.post img {
+  width: 100%;
+  height: auto;
+}
+
+.post-content p:first-child {
+  font-size: var(--font-size-x-large);
+}
+
+.post-content .img-caption {
+  margin: 1rem 0;
+  padding: 0 0.5rem;
+  font-size: var(--font-size-small);
+  color: var(--color-grey);
+  text-align: center;
+}
 
  /* Post Meta
     ============================= */
