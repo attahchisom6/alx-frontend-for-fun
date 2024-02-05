@@ -1,0 +1,100 @@
+/*** Layout ***/
+.menu {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 200px;
+  height: 250px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  transition: height 0.4s ease;
+  margin-top: 50px;
+}
+
+.menu-open {
+  display: none;
+}
+
+.menu:has(.menu-open:checked) {
+  height: 470px;
+  transition: 0.4s ease;
+}
+
+.menu-open-button {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  transition: height 0.4s ease;
+  background-color: #cc230a;
+  color: white;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 15px;
+}
+
+.menu-open:not(:checked) + .menu-open-button:hover {
+  transition: 0.4 ease;
+  transform: scale(1.1);
+}
+
+.menu-open:checked + .menu-open-button {
+  width: 70px;
+  height: 70px;
+}
+
+
+/*** MENU LINE ****/
+.menu-line {
+  width: 25px;
+  height: 5px;
+  background-color: #ffffff;
+  margin-bottom: 5px;
+}
+
+
+.menu-open:checked + .menu-open-button .menu-line-1 {
+  transform: rotate(45deg);
+  width: 20px;
+  height: 3px;
+  position: absolute;
+}
+
+.menu-open:checked + .menu-open-button .menu-line-2 {
+  transform: rotate(-45deg);
+  width: 20px;
+  height: 3px;
+  position: absolute;
+}
+
+.menu-open:checked + .menu-open-button .menu-line-3 {
+  display: none;
+}
+
+/*** MENU ITEMS ***/
+.menu-item {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 60px;
+  height: 60px;
+  color: black;
+  border-radius: 50%;
+  border: 2px solid #000000;
+  justify-content: center;
+  align-items: center;
+  background-color: #cc230a;
+  color: #ffffff;
+  cursor: pointer;
+  margin-bottom: 4px;
+}
+
+.menu-item:hover {
+  background-color: #ffffff;
+  color: #cc230a;
+}
+
+.menu-open:not(:checked) ~ .menu-item {
+  display: none;
+}
