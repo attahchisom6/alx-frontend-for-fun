@@ -1,0 +1,16 @@
+/* Mixin */
+
+@mixin margin_sides($size) {
+  margin-left: $size;
+  margin-right: $size;
+}
+
+body {
+  @include margin_sides(10px);
+}
+
+div {
+  @include margin_sides(15px);
+}
+
+

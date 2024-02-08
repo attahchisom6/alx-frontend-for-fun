@@ -1,0 +1,7 @@
+/* For loop */
+
+@for $k from 1 through 5 {
+  h#{$k} {
+    font-size: #{$k}px;
+  }
+}

@@ -1,0 +1,27 @@
+/* Sorting A List */
+
+@function bubble_sort($list) {
+  len: length(list)
+  sorted: false
+
+  @while (sorted: false) {
+    sored: true
+    @for $k from 0 through len - 1 {
+      $p = $k + 1
+      @if $k > $p {
+        $temp: nth($list, $k)
+        $list: set-nth($list, $k, nth($list, $p))
+        $list: nth($list, $p, $temp)
+        $sorted: false
+      }
+    }
+    $len = $len - 1
+  }
+  return $list
+}
+
+$list_to_sort: john anna zoe kim felicia carrie;
+
+$sorted_list: sort($list_to_sort);
+
+@debug $sorted_list

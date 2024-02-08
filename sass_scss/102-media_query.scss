@@ -1,0 +1,22 @@
+/* Max widths */
+
+$font-size: 20px;
+$step: ceil(960 / 320);
+
+h1 {
+  font-size: $font-size;
+
+  @for $k from $step through 1 {
+    $max_width: $k * 320;
+
+    @media screen and (max-width: #{$max_width}px) {
+      font-size: $font-size - 2 * ceil($step / $k);
+
+      @if $max_width <= 320 {
+        &.small {
+          color: #D1D1D1;
+        }
+      }
+    }
+  }
+}
