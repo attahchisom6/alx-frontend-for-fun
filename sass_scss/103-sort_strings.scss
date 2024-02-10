@@ -1,27 +1,57 @@
 /* Sorting A List */
 
-@function bubble_sort($list) {
-  len: length(list)
-  sorted: false
+$default_order: a b c d e f g h i j k l m n o p q r s t u v w x y z !default;
 
-  @while (sorted: false) {
-    sored: true
-    @for $k from 0 through len - 1 {
-      $p = $k + 1
-      @if $k > $p {
-        $temp: nth($list, $k)
-        $list: set-nth($list, $k, nth($list, $p))
-        $list: nth($list, $p, $temp)
-        $sorted: false
-      }
+
+@function str-compare($str-a, $str-b, $order) {
+    $str-a: to-lower-case($str-a + unquote(""));
+    $str-b: to-lower-case($str-b + unquote(""));
+
+    @for $k from 1 through min(str-length($str-a), str-length($str-b)) {
+        $char-a: str-slice($str-a, $k, $k);
+        $char-b: str-slice($str-b, $k, $k);
+
+        @if $char-a and $char-b and index($order, $char-a) != index($order, $char-b) {
+            @return index($order, $char-a) < index($order, $char-b);
+        }
     }
-    $len = $len - 1
-  }
-  return $list
+    @return str-length($str-a) < str-length($str-b);
+}
+
+@function quick_sort($list, $order: $default_order) {
+    $less: ();
+    $equal: ();
+    $large: ();
+
+    @if length($list) > 1 {
+        $pivot: nth($list, ceil(length($list) / 2));
+
+        @each $item in $list {
+            $compare: str-compare($item, $pivot, $order);
+
+            @if $item == $pivot {
+              $equal: append($equal, $item, list-separator($list));
+            }
+            @else if $compare == true {
+                $less: append($less, $item, list-separator($list));
+            }
+            @else if $compare == false {
+                $large: append($large, $item, list-separator($list));
+            }
+        }
+
+        $left_sort: quick_sort($less, $order);
+        $right_sort: quick_sort($large, $order);
+        $less_and_equal_sorted: join($left_sort, $equal);
+        $full_sorted: join($less_and_equal_sorted, $right_sort);
+
+        @return $full_sorted;
+    }
+    @return $list;
 }
 
 $list_to_sort: john anna zoe kim felicia carrie;
 
-$sorted_list: sort($list_to_sort);
+$sorted: quick_sort($list_to_sort, $default_order);
 
-@debug $sorted_list
+@debug $sorted
